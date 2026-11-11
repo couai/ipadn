@@ -174,6 +174,8 @@ struct SettingsView: View {
                 Button("导出诊断信息") {
                     do { share = SharedFile(url: try store.exportDiagnostics()) } catch { store.errorMessage = error.localizedDescription }
                 }
+                Button("复制诊断信息") { store.copyDiagnostics(); UX.feedback() }
+                    .accessibilityIdentifier("settings.copy-diagnostics")
                 Button("恢复默认设置", role: .destructive) { resetSettings = true }
             }
             Section {
@@ -211,6 +213,10 @@ struct SettingsView: View {
                         if on { UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in } }
                     }
                 Link("项目与更新", destination: URL(string: "https://github.com/mengangs/ipadn")!)
+            }
+            Section {
+                NavigationLink { SupportView() } label: { SupportRow() }
+                    .accessibilityIdentifier("settings.support")
             }
         }
         .toolPage().navigationTitle("设置").navigationBarTitleDisplayMode(.inline)

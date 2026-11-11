@@ -114,7 +114,7 @@
 **2. 配对（只需一次）**
 
 - **iOS / iPadOS 27 及更新版本，不需要电脑**：在「安装设置 › 原生安装」中点按「在本机配对」，iPadn 会打开引导页。按提示打开「设置 › 隐私与安全性 › 开发者模式」，点按「与 iPadn 配对」，输入 iPadn 显示的配对码。配对码同时显示在灵动岛、锁屏和通知中，不用切回 iPadn。需要先开启开发者模式；看不到这个开关时，说明设备上还没有用开发者证书签名的应用，用企业证书签名时可能不会出现。
-- **iOS 17.4 – 26**：在电脑上用 [idevice_pair](https://github.com/jkcoxson/idevice_pair) 连接设备，生成「远程配对（RPPairing）」文件，放进「文件 › 我的 iPhone › iPadn」，在「原生安装」页 iPadn 会自动导入；也可以点「导入配对文件」从其他位置选取。
+- **iOS 17.4 – 26**：在电脑上用 [idevice_pair](https://github.com/jkcoxson/idevice_pair) 连接设备，生成「远程配对（RPPairing）」文件，放进「文件 › 我的 iPhone › iPadn」，在「原生安装」页 iPadn 会自动导入；也可以点「导入配对文件」从其他位置选取。电脑只需要用这一次，之后安装都不再需要电脑。
 
 **3. 检查连接**
 
@@ -170,6 +170,14 @@ Apple 只允许下载你的账号拥有许可的应用。版本也可能已经�
 <summary><b>为什么 App Store 里显示云朵、不能更新，爱思助手显示「共享正版」？</b></summary>
 
 这是用一键安装、本机证书或代理服务安装的应用。系统网页安装通道会去掉安装包里的购买记录，App Store 和电脑工具因此认不出它。用「原生安装」重新覆盖安装一次即可恢复，数据会保留。
+</details>
+
+<details>
+<summary><b>为什么 iOS 27 以下要用电脑才能配对？用一次就行吗？</b></summary>
+
+原生安装使用的是系统自带的安装服务，和电脑装 App 用的是同一个，它只接受已经配对、受信任的连接。iOS 27 之前，苹果只允许电脑通过数据线发起这种配对（手机上点「信任此电脑」并输入密码），手机上的 App 无法自己发起，所以需要先在电脑上生成配对文件。iOS 27 在「开发者模式」中加入了在手机上配对的入口，因此可以直接用「在本机配对」。
+
+电脑只需要用一次。配对文件导入 iPadn 后会一直有效，只有修改锁屏密码、还原系统，或在电脑上取消信任后才需要重新生成。iOS 17.4 以下没有这套连接方式，无法使用原生安装。
 </details>
 
 <details>
@@ -242,12 +250,24 @@ Apple 只允许下载你的账号拥有许可的应用。版本也可能已经�
 
 ## 支持 iPadn
 
-iPadn 会一直免费并开源，不含广告。如果它帮你省下了时间，或者你只是喜欢这个项目，欢迎请作者喝杯咖啡，你的支持是持续更新的动力。点个 Star、反馈问题或帮忙改进翻译，也同样是很大的帮助。
+<div align="center">
 
-- **爱发电**（支持支付宝、微信）：[afdian.com/a/mengangs](https://afdian.com/a/mengangs)
-- **USDT**（仅限 BNB Smart Chain / BEP20 网络）：`0x5f0cff7587b9fc305f9fa626135789bd5100818e`
+<sub>❤️ ❤️ ❤️</sub>
 
-> 转账 USDT 前请核对网络为 BEP20、地址完全一致。其他网络或其他币种转入可能无法找回。
+iPadn 会一直**免费、开源、没有广告**。<br>
+如果它帮你省下了时间，或者你只是喜欢这个项目，欢迎请作者喝杯咖啡 ☕<br>
+你的鼓励是持续更新的动力。
+
+<a href="https://afdian.com/a/mengangs"><img src="https://img.shields.io/badge/%E7%88%B1%E5%8F%91%E7%94%B5-%E8%AF%B7%E4%BD%9C%E8%80%85%E5%96%9D%E6%9D%AF%E5%92%96%E5%95%A1-946ce6?style=for-the-badge&logo=buymeacoffee&logoColor=white" alt="爱发电"></a>
+<img src="https://img.shields.io/badge/USDT-BEP20-26a17b?style=for-the-badge&logo=tether&logoColor=white" alt="USDT BEP20">
+
+| 爱发电（支付宝、微信） | USDT（BNB Smart Chain / BEP20） |
+| :---: | :---: |
+| [**afdian.com/a/mengangs**](https://afdian.com/a/mengangs)<br><sub>可按月赞助，也可一次性支持</sub> | <img src="docs/images/usdt-bep20.png" width="180" alt="USDT 收款二维码"><br><code>0x5f0cff7587b9fc305f9fa626135789bd5100818e</code> |
+
+<sub>转账 USDT 前请核对网络为 BEP20、地址完全一致，其他网络或币种转入可能无法找回。<br>在 iPadn「账号 › 设置 › 支持 iPadn」中也可以扫码或复制地址。<br>点个 Star、反馈问题或帮忙改进翻译，同样是很大的支持。</sub>
+
+</div>
 
 ## 参与贡献
 

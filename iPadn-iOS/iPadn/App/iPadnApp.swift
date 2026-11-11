@@ -17,6 +17,9 @@ enum AppContainer {
                     DownloadJob(app: StoreApp(id: "stress-\(index)", name: "测试安装包 \(index)", bundleID: "example.stress.\(index)", version: "1.0"), status: .paused)
                 }
             }
+            if ProcessInfo.processInfo.arguments.contains("--updates") {
+                jobs = PreviewData.updatable.map { DownloadJob(app: $0, status: .completed) }
+            }
             let store = ToolStore(downloadManager: DownloadManager(previewJobs: jobs))
             store.prepareVisualPreview()
             store.settings.appearance = ProcessInfo.processInfo.arguments.contains("--dark") ? "dark" : "light"
@@ -113,6 +116,10 @@ enum PreviewData {
                  iconURL: icon("Purple221/v4/d7/b3/67/d7b36785-baf0-d87b-7868-ea2170bc4ea6/AppIcon-0-0-1x_U007emarketing-0-8-0-0-0-85-220.png"),
                  category: "娱乐", size: 325_474_304),
     ]
+    /// Finished downloads with real store IDs, for previews of update rows.
+    static var updatable: [StoreApp] {
+        zip(apps.prefix(3), ["363590051", "324684580", "1232780281"]).map { app, id in var app = app; app.id = id; return app }
+    }
     /// The followed app; UI tests find it by this identifier.
     static var favorite: StoreApp { var app = apps[0]; app.id = "preview-app"; return app }
     static var chinese: Bool { Locale.preferredLanguages.first?.hasPrefix("zh") == true }
@@ -126,6 +133,7 @@ private struct PreviewScreen: View {
             if args.contains("--login") { NavigationStack { LoginView() } }
             else if args.contains("--detail"), let app = store.favorites.first { NavigationStack { AppDetailView(app: app) } }
             else if args.contains("--installation") { NavigationStack { InstallationSettingsView() } }
+            else if args.contains("--support") { NavigationStack { SupportView() } }
             else { RootView() }
         }
         .environment(\.dynamicTypeSize, args.contains("--largest-text") ? .accessibility5 : args.contains("--large-text") ? .accessibility2 : .large)

@@ -114,7 +114,7 @@ Get [LocalDevVPN](https://apps.apple.com/app/localdevvpn/id6755608044) from the 
 **2. Pair (once)**
 
 - **iOS / iPadOS 27 or later, no computer:** In Installation settings › Native install, tap “Pair on This Device”. iPadn opens a guide. Open Settings › Privacy & Security › Developer Mode, tap “Pair with iPadn” and enter the code iPadn shows. The code also appears in the Dynamic Island, on the Lock Screen and in a notification, so you don't need to switch back. Developer Mode must be on; if the switch isn't there, the device has no developer-signed app yet, and it may not appear with enterprise signing.
-- **iOS 17.4 – 26:** On a computer, connect the device with [idevice_pair](https://github.com/jkcoxson/idevice_pair) and create a remote pairing (RPPairing) file. Put it in Files › On My iPhone › iPadn and open the Native install page: iPadn imports it automatically. You can also tap “Import Pairing File” to pick it from elsewhere.
+- **iOS 17.4 – 26:** On a computer, connect the device with [idevice_pair](https://github.com/jkcoxson/idevice_pair) and create a remote pairing (RPPairing) file. Put it in Files › On My iPhone › iPadn and open the Native install page: iPadn imports it automatically. You can also tap “Import Pairing File” to pick it from elsewhere. You only need the computer this once; later installs don't need it.
 
 **3. Check the connection**
 
@@ -170,6 +170,14 @@ One-tap install, local certificate and proxy service use the system's web instal
 <summary><b>Why does the App Store show a cloud icon and no update, and desktop tools list the app as “shared”?</b></summary>
 
 The app was installed with one-tap install, local certificate or proxy service. The system's web installation channel drops the purchase record inside the package, so the App Store and desktop tools don't recognize it. Install it once more with native install to fix it; its data is kept.
+</details>
+
+<details>
+<summary><b>Why does pairing need a computer below iOS 27? Is it only once?</b></summary>
+
+Native install uses the system's own installation service, the same one a computer uses to install apps, and it only accepts paired, trusted connections. Before iOS 27, Apple only lets a computer start that pairing over a cable (you tap “Trust This Computer” and enter your passcode); an app on the phone can't start it, so the pairing file has to be made on a computer first. iOS 27 added on-device pairing under Developer Mode, which is what “Pair on This Device” uses.
+
+You only need the computer once. After the pairing file is imported, it keeps working until you change the passcode, restore the device or untrust the computer. Below iOS 17.4 the system has no such connection, so native install isn't available.
 </details>
 
 <details>
@@ -242,12 +250,24 @@ No. Removing an account only clears that account's sign-in details and purchase 
 
 ## Support iPadn
 
-iPadn will always be free and open source, with no ads. If it saves you time or you simply enjoy it, you're welcome to buy the author a coffee; it helps keep updates coming. Starring the repo, reporting problems and improving translations help just as much.
+<div align="center">
 
-- **Afdian** (Alipay, WeChat Pay): [afdian.com/a/mengangs](https://afdian.com/a/mengangs)
-- **USDT** (BNB Smart Chain / BEP20 only): `0x5f0cff7587b9fc305f9fa626135789bd5100818e`
+<sub>❤️ ❤️ ❤️</sub>
 
-> Before sending USDT, check that the network is BEP20 and the address matches exactly. Funds sent on another network or in another token may be lost.
+iPadn will always be **free, open source and ad-free**.<br>
+If it saves you time or you simply enjoy it, you're welcome to buy the author a coffee ☕<br>
+Your support keeps the updates coming.
+
+<a href="https://afdian.com/a/mengangs"><img src="https://img.shields.io/badge/Afdian-Buy%20me%20a%20coffee-946ce6?style=for-the-badge&logo=buymeacoffee&logoColor=white" alt="Afdian"></a>
+<img src="https://img.shields.io/badge/USDT-BEP20-26a17b?style=for-the-badge&logo=tether&logoColor=white" alt="USDT BEP20">
+
+| Afdian (Alipay, WeChat Pay) | USDT (BNB Smart Chain / BEP20) |
+| :---: | :---: |
+| [**afdian.com/a/mengangs**](https://afdian.com/a/mengangs)<br><sub>Monthly or one-time</sub> | <img src="docs/images/usdt-bep20.png" width="180" alt="USDT QR code"><br><code>0x5f0cff7587b9fc305f9fa626135789bd5100818e</code> |
+
+<sub>Before sending USDT, check that the network is BEP20 and the address matches exactly; funds sent on another network or in another token may be lost.<br>You can also scan or copy the address in iPadn under Account › Settings › Support iPadn.<br>Starring the repo, reporting problems and improving translations help just as much.</sub>
+
+</div>
 
 ## Contributing
 
