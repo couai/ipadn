@@ -7,13 +7,14 @@ struct SettingsView: View {
     /// Settings are grouped into pages, like the system's Settings app, so
     /// the first screen stays short.
     enum Page {
-        case root, downloads, follow, appearance, sources, maintenance
+        case root, downloads, follow, appearance, lock, sources, maintenance
         var title: LocalizedStringKey {
             switch self {
             case .root: return "设置"
             case .downloads: return "下载"
             case .follow: return "关注"
             case .appearance: return "外观与图标"
+            case .lock: return "应用锁"
             case .sources: return "历史版本来源"
             case .maintenance: return "备份与维护"
             }
@@ -54,6 +55,7 @@ struct SettingsView: View {
                 pageLink(.downloads, "arrow.down.circle", "settings.page.downloads")
                 pageLink(.follow, "bell", "settings.page.follow")
                 pageLink(.appearance, "paintbrush", "settings.page.appearance")
+                pageLink(.lock, "lock", "settings.page.lock")
                 pageLink(.sources, "clock.arrow.circlepath", "settings.page.sources")
                 NavigationLink { InstallationSettingsView() } label: { Label("安装设置", systemImage: "arrow.down.app") }
                     .accessibilityIdentifier("settings.installation")
@@ -66,7 +68,7 @@ struct SettingsView: View {
                 Stepper("等待任务上限：\(store.settings.maxQueuedDownloads)", value: $store.settings.maxQueuedDownloads, in: 1...100)
                 Toggle("下载完成通知", isOn: $store.settings.notifications)
                 Toggle("新版本提醒", isOn: $store.settings.updateNotifications)
-                    .onChange(of: store.settings.updateNotifications) { _, on in
+                    .compatibleOnChange(of: store.settings.updateNotifications) { on in
                         if on { UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in } }
                     }
                 Toggle("兼容下载模式", isOn: $store.settings.compatibleDownloadMode)
@@ -89,13 +91,45 @@ struct SettingsView: View {
             if page == .follow {
             Section {
                 Toggle("关注应用提醒", isOn: $store.settings.watchNotifications)
-                    .onChange(of: store.settings.watchNotifications) { _, on in
+                    .compatibleOnChange(of: store.settings.watchNotifications) { on in
                         if on { UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in } }
                     }
                 Toggle("目标价提醒", isOn: $store.settings.targetPrices)
                     .accessibilityIdentifier("settings.target-prices")
             } header: { Text("关注") } footer: {
                 Text("关注的应用有新版本、降价、限免或下架时通知你。后台检查的时间由系统决定，打开 iPadn 时也会检查。")
+            }
+            }
+            if page == .lock {
+            Section {
+                Toggle(isOn: Binding(get: { store.settings.appLock }, set: { on in
+                    Task {
+                        guard await AppLock.shared.authenticate(reason: AppText.text(on ? "开启应用锁" : "关闭应用锁")) else { return }
+                        withAnimation { store.settings.appLock = on }
+                    }
+                })) {
+                    switch AppLock.method {
+                    case .faceID: Text("使用面容 ID 锁定")
+                    case .touchID: Text("使用触控 ID 锁定")
+                    default: Text("使用密码锁定")
+                    }
+                }
+                .disabled(AppLock.method == .unavailable && !store.settings.appLock)
+                .accessibilityIdentifier("settings.app-lock")
+                if store.settings.appLock {
+                    Picker("需要验证", selection: $store.settings.appLockDelay) {
+                        Text("立即").tag(0)
+                        Text("1 分钟后").tag(60)
+                        Text("5 分钟后").tag(300)
+                        Text("15 分钟后").tag(900)
+                    }
+                }
+            } footer: {
+                if AppLock.method == .unavailable && !store.settings.appLock {
+                    Text("这台设备没有设置密码，无法使用应用锁。")
+                } else {
+                    Text("打开 iPadn 或离开一段时间后回来时需要验证身份；多任务界面中也会隐藏内容。下载会在后台照常进行。")
+                }
             }
             }
             if page == .appearance {
@@ -280,7 +314,7 @@ struct SettingsView: View {
                 }
                 .disabled(store.appUpdateChecking)
                 Toggle("自动检查更新", isOn: $store.settings.appUpdateCheck)
-                    .onChange(of: store.settings.appUpdateCheck) { _, on in
+                    .compatibleOnChange(of: store.settings.appUpdateCheck) { on in
                         if on { UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in } }
                     }
                 Link("项目与更新", destination: URL(string: "https://github.com/mengangs/ipadn")!)
@@ -292,7 +326,7 @@ struct SettingsView: View {
             }
         }
         .toolPage().navigationTitle(page.title).navigationBarTitleDisplayMode(.inline)
-        .onChange(of: scenePhase) { _, phase in if phase == .active { icons.refresh() } }
+        .compatibleOnChange(of: scenePhase) { phase in if phase == .active { icons.refresh() } }
         .alert("图标未更改", isPresented: Binding(get: { iconIssue != nil }, set: { if !$0 { iconIssue = nil } })) {
             Button("知道了", role: .cancel) { iconIssue = nil }
         } message: { Text(iconIssue ?? "") }
@@ -313,7 +347,7 @@ struct SettingsView: View {
             guard let data = pendingBackup else { return }
             Task { do { try await store.importBackup(data) } catch { store.errorMessage = error.localizedDescription } }
         }
-        .navigationDestination(item: $editingSourceID) { id in
+        .compatibleNavigationDestination(item: $editingSourceID) { id in
             if let index = store.settings.versionSources.firstIndex(where: { $0.id == id }) {
                 VersionSourceEditor(source: $store.settings.versionSources[index])
             }

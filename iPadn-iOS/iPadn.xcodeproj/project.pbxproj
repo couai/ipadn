@@ -139,6 +139,16 @@
 			isa = PBXBuildFile;
 			fileRef = 0BD07ACE3BF45E1B7AA5D034;
 		};
+		0D7793336967BAC68EF84AA3 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = "Services/AppLock.swift";
+			sourceTree = "<group>";
+		};
+		D8129C13FC18530BE758CA16 = {
+			isa = PBXBuildFile;
+			fileRef = 0D7793336967BAC68EF84AA3;
+		};
 		77BE20F05C95CF0C3CDD1102 = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -299,6 +309,16 @@
 			isa = PBXBuildFile;
 			fileRef = 6FD3FF480779FC13F78B2062;
 		};
+		3883336C6654D547EEC00DB6 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = "Services/PackageInfoService.swift";
+			sourceTree = "<group>";
+		};
+		9C7165EF870A84BE8C05FD9F = {
+			isa = PBXBuildFile;
+			fileRef = 3883336C6654D547EEC00DB6;
+		};
 		DE2B00F9D1374F49D8D7B778 = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -328,6 +348,16 @@
 		26DD24F92003FD87260C4945 = {
 			isa = PBXBuildFile;
 			fileRef = 7A217757AC93BE1C1F3A2658;
+		};
+		31547E2843918E8C8FFD186C = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = "Services/ReviewService.swift";
+			sourceTree = "<group>";
+		};
+		18EF1CFA61D8BE029D93713A = {
+			isa = PBXBuildFile;
+			fileRef = 31547E2843918E8C8FFD186C;
 		};
 		20DF3E39BC0667C304A58585 = {
 			isa = PBXFileReference;
@@ -449,6 +479,16 @@
 			isa = PBXBuildFile;
 			fileRef = 8F1179CCA505E90A3DE9BA29;
 		};
+		7B2269B1AFDD5F847E9EAD19 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = "Views/InstalledAppsView.swift";
+			sourceTree = "<group>";
+		};
+		5C5FBC0A39B7120CD76707FB = {
+			isa = PBXBuildFile;
+			fileRef = 7B2269B1AFDD5F847E9EAD19;
+		};
 		86F43769758ED77572E1A466 = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -458,6 +498,16 @@
 		7D6640A75908FC0DCE131875 = {
 			isa = PBXBuildFile;
 			fileRef = 86F43769758ED77572E1A466;
+		};
+		B4AE6E883932F5C994D0FEAE = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = "Views/PackageInfoView.swift";
+			sourceTree = "<group>";
+		};
+		89A2B94AB9A930101EA11B8B = {
+			isa = PBXBuildFile;
+			fileRef = B4AE6E883932F5C994D0FEAE;
 		};
 		D38DA86C81DE0C58DC2A02C2 = {
 			isa = PBXFileReference;
@@ -518,6 +568,16 @@
 		989AF76AFBA368A06E7CCB98 = {
 			isa = PBXBuildFile;
 			fileRef = 5855D908740EF91B6AD49289;
+		};
+		C843A2703954D25BA746097A = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = "Views/ReviewViews.swift";
+			sourceTree = "<group>";
+		};
+		DB271A9381A95A92261156A2 = {
+			isa = PBXBuildFile;
+			fileRef = C843A2703954D25BA746097A;
 		};
 		875F86E325615E997D89246A = {
 			isa = PBXFileReference;
@@ -639,10 +699,99 @@
 			isa = PBXBuildFile;
 			fileRef = 0DCDD6B6150838BA6D7A2C9C;
 		};
-		393950C9B69B23E630913278 = {
+		1008C8734C72CA3F7ABDB50E = {
 			isa = PBXFileReference;
-			lastKnownFileType = text.json.xcstrings;
-			path = "Resources/AppShortcuts.xcstrings";
+			lastKnownFileType = text.plist.strings;
+			name = ar;
+			path = "Resources/ar.lproj/AppShortcuts.strings";
+			sourceTree = "<group>";
+		};
+		D675A232F8E930CE36F3A935 = {
+			isa = PBXFileReference;
+			lastKnownFileType = text.plist.strings;
+			name = de;
+			path = "Resources/de.lproj/AppShortcuts.strings";
+			sourceTree = "<group>";
+		};
+		08F36FD583DC2DE47EE40C82 = {
+			isa = PBXFileReference;
+			lastKnownFileType = text.plist.strings;
+			name = en;
+			path = "Resources/en.lproj/AppShortcuts.strings";
+			sourceTree = "<group>";
+		};
+		4D11255D3165AF7A2BFE22C4 = {
+			isa = PBXFileReference;
+			lastKnownFileType = text.plist.strings;
+			name = es;
+			path = "Resources/es.lproj/AppShortcuts.strings";
+			sourceTree = "<group>";
+		};
+		F439D47B640C245F56ED9298 = {
+			isa = PBXFileReference;
+			lastKnownFileType = text.plist.strings;
+			name = fr;
+			path = "Resources/fr.lproj/AppShortcuts.strings";
+			sourceTree = "<group>";
+		};
+		6A979F59C4890C9888369AE0 = {
+			isa = PBXFileReference;
+			lastKnownFileType = text.plist.strings;
+			name = ja;
+			path = "Resources/ja.lproj/AppShortcuts.strings";
+			sourceTree = "<group>";
+		};
+		4E442A6ACD9DC0D53A0BECEE = {
+			isa = PBXFileReference;
+			lastKnownFileType = text.plist.strings;
+			name = ko;
+			path = "Resources/ko.lproj/AppShortcuts.strings";
+			sourceTree = "<group>";
+		};
+		5C872360A867DBDBEB149C34 = {
+			isa = PBXFileReference;
+			lastKnownFileType = text.plist.strings;
+			name = "pt-BR";
+			path = "Resources/pt-BR.lproj/AppShortcuts.strings";
+			sourceTree = "<group>";
+		};
+		AB4176A4E80A75407BF8011D = {
+			isa = PBXFileReference;
+			lastKnownFileType = text.plist.strings;
+			name = ru;
+			path = "Resources/ru.lproj/AppShortcuts.strings";
+			sourceTree = "<group>";
+		};
+		861B72437A7F21583C8DE378 = {
+			isa = PBXFileReference;
+			lastKnownFileType = text.plist.strings;
+			name = "zh-Hans";
+			path = "Resources/zh-Hans.lproj/AppShortcuts.strings";
+			sourceTree = "<group>";
+		};
+		0C3B2944EF4B6836E423BCB3 = {
+			isa = PBXFileReference;
+			lastKnownFileType = text.plist.strings;
+			name = "zh-Hant";
+			path = "Resources/zh-Hant.lproj/AppShortcuts.strings";
+			sourceTree = "<group>";
+		};
+		393950C9B69B23E630913278 = {
+			isa = PBXVariantGroup;
+			children = (
+				1008C8734C72CA3F7ABDB50E,
+				D675A232F8E930CE36F3A935,
+				08F36FD583DC2DE47EE40C82,
+				4D11255D3165AF7A2BFE22C4,
+				F439D47B640C245F56ED9298,
+				6A979F59C4890C9888369AE0,
+				4E442A6ACD9DC0D53A0BECEE,
+				5C872360A867DBDBEB149C34,
+				AB4176A4E80A75407BF8011D,
+				861B72437A7F21583C8DE378,
+				0C3B2944EF4B6836E423BCB3,
+			);
+			name = AppShortcuts.strings;
 			sourceTree = "<group>";
 		};
 		85310CBF180B460ABE6CA437 = {
@@ -1016,6 +1165,7 @@
 				85BBD237A09E32D159E7886F,
 				7E60346E3184636F15C36607,
 				0BD07ACE3BF45E1B7AA5D034,
+				0D7793336967BAC68EF84AA3,
 				77BE20F05C95CF0C3CDD1102,
 				135F5A5E3C8029531EAFCC61,
 				03223D703FED7749D0182600,
@@ -1032,9 +1182,11 @@
 				2B3184F85E6B0547A9BD3729,
 				8EF4977EC0C2C9F1B0803640,
 				6FD3FF480779FC13F78B2062,
+				3883336C6654D547EEC00DB6,
 				DE2B00F9D1374F49D8D7B778,
 				BD7B9C3FE2E498A370E73F90,
 				7A217757AC93BE1C1F3A2658,
+				31547E2843918E8C8FFD186C,
 				20DF3E39BC0667C304A58585,
 				C4E202139941DE609BFBB95D,
 				0384F4C246C41B42E5BF258E,
@@ -1047,13 +1199,16 @@
 				C378265D29DC31EA6BC9A4BB,
 				A1E708F62865C66C68AA85E9,
 				8F1179CCA505E90A3DE9BA29,
+				7B2269B1AFDD5F847E9EAD19,
 				86F43769758ED77572E1A466,
+				B4AE6E883932F5C994D0FEAE,
 				D38DA86C81DE0C58DC2A02C2,
 				912A19F2CDAA1C7162E0CF16,
 				017DA2AF8D5CEEE8F76D714D,
 				1E9502E0C8542CA2BF94D23E,
 				9E24C84D88E9AA778F93D199,
 				5855D908740EF91B6AD49289,
+				C843A2703954D25BA746097A,
 				875F86E325615E997D89246A,
 				AC7ABAF3BAFCCF834C35D127,
 				B8B5827DB7B30C5EF9E4CE8E,
@@ -1150,6 +1305,7 @@
 				C65BFB920B096427B3107DAB,
 				149794F5729071AD82D12787,
 				E0631520F368539F2C0854C8,
+				D8129C13FC18530BE758CA16,
 				DF17CC0ED5E25791D522742C,
 				D049070A4AAA6DF92E0DC832,
 				D9FE40E25730AE6E6B295708,
@@ -1166,9 +1322,11 @@
 				6C76F185666D0A3F556D344F,
 				4D79E74E9CA15CF0827993E9,
 				5FDDCE29B86AB47F87041EDD,
+				9C7165EF870A84BE8C05FD9F,
 				947A4B9739DE11F25F172D4C,
 				4224CFC96649DC5892361532,
 				26DD24F92003FD87260C4945,
+				18EF1CFA61D8BE029D93713A,
 				79C9C7B781E2036A0BD109DC,
 				4290A7A571B139F6D5141896,
 				DBCACF27EEC498B372174DEC,
@@ -1181,13 +1339,16 @@
 				BBA95D751DB25B4ECFB64D15,
 				E03C6E916BCB77F54CB0D996,
 				94FC099DDAA41D79877704E8,
+				5C5FBC0A39B7120CD76707FB,
 				7D6640A75908FC0DCE131875,
+				89A2B94AB9A930101EA11B8B,
 				4AD7E64B5ED2E685307DA502,
 				B6B13027E2F2F9F9EC6A34E5,
 				751DC79A4A1F6A9B06991073,
 				4081F8E081F38E620E4F6F53,
 				E1275941D01F6982E2AF1681,
 				989AF76AFBA368A06E7CCB98,
+				DB271A9381A95A92261156A2,
 				9B02A284355960077990E605,
 				2838CB8E3BB731C0C58ADEBF,
 				E68DE723119F75E73EA2FB8A,
@@ -1311,7 +1472,7 @@
 		653F00C218B171A375DB131B = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
 				CLANG_ENABLE_MODULES = YES;
@@ -1331,7 +1492,7 @@
 		C6E4775ECDD79062F35351BF = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
 				CLANG_ENABLE_MODULES = YES;
@@ -1733,6 +1894,7 @@
 		4162F030F80DA64AC10BE48A = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.local.iPadn.LiveActivity;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				CODE_SIGN_STYLE = Automatic;
@@ -1761,6 +1923,7 @@
 		602C8E4536EEF68969E0EA47 = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.local.iPadn.LiveActivity;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				CODE_SIGN_STYLE = Automatic;

@@ -76,6 +76,10 @@ struct AccountsView: View {
             Section {
                 Button { store.tab = 2 } label: { Label("已购项目", systemImage: "bag") }
                 Button { store.tab = 1 } label: { Label("下载与安装", systemImage: "arrow.down.circle") }
+                if InstalledAppsView.isSupported {
+                    NavigationLink { InstalledAppsView() } label: { Label("本机应用", systemImage: "iphone") }
+                        .accessibilityIdentifier("accounts.installed-apps")
+                }
                 NavigationLink { SettingsView() } label: { Label("设置", systemImage: "gearshape") }
                     .accessibilityIdentifier("accounts.settings")
             }
@@ -202,7 +206,7 @@ struct LoginView: View {
                     credentials.transition(.move(edge: .leading).combined(with: .opacity))
                 }
             }
-            .animation(.snappy, value: verifying)
+            .animation(.compatibleSnappy, value: verifying)
             .frame(maxWidth: 460).padding(.horizontal, 24).padding(.vertical, 20)
             .frame(maxWidth: .infinity)
         }
@@ -211,7 +215,7 @@ struct LoginView: View {
         .navigationTitle("").navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(busy)
         .toolbar {
-            if busy { ToolbarItem(placement: .topBarTrailing) { Button("取消") { loginTask?.cancel() } } }
+            if busy { ToolbarItem(placement: .compatibleTopBarTrailing) { Button("取消") { loginTask?.cancel() } } }
         }
         .onDisappear { loginTask?.cancel() }
     }
