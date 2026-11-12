@@ -20,6 +20,8 @@ struct DownloadsView: View {
     @State private var pendingDelete: Set<UUID> = []
     @State private var confirmingDelete = false
     @State private var installing: DownloadJob?
+    /// The LiveContainer setup tip, once read, stays closed.
+    @AppStorage("liveContainerTipDismissed") private var liveContainerTipDismissed = false
     @State private var inspecting: DownloadJob?
     @State private var selection = Set<UUID>()
     @State private var editMode: EditMode = .inactive
@@ -183,7 +185,7 @@ struct DownloadsView: View {
                                 if job.rawFormat == nil {
                                     Section {
                                         PackagePlatformRow(file: file)
-                                        NavigationLink { PackageInfoView(file: file) } label: {
+                                        NavigationLink { PackageInfoView(file: file, job: job) } label: {
                                             Label("安装包信息", systemImage: "info.circle")
                                         }
                                         .accessibilityIdentifier("download.package-info")
@@ -260,6 +262,14 @@ struct DownloadsView: View {
                     .listRowBackground(Color.clear).listRowSeparator(.hidden)
                 }
                 if let error = manager.storageError { Section { InlineIssue(message: error) } }
+                if InstallLog.insideLiveContainer && !liveContainerTipDismissed {
+                    Section {
+                        LiveContainerTip { withAnimation { liveContainerTipDismissed = true } }
+                    }
+                }
+            if manager.waitingForWiFi, manager.jobs.contains(where: { [.queued, .pausing].contains($0.status) }) {
+                Section { WiFiWaitRow() }
+            }
                 if let warning = manager.discoveryWarning { Section { InlineIssue(message: warning) } }
                 if let warning = manager.saveWarning { Section { InlineIssue(message: warning) } }
                 if visible.isEmpty {

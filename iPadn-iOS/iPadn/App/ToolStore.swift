@@ -55,6 +55,11 @@ struct UndoNotice: Identifiable {
 }
 
 @MainActor
+final class TabState: ObservableObject {
+    @Published var selection = 0
+}
+
+@MainActor
 final class ToolStore: ObservableObject {
     let signer = SAPSigner()
     let versions = VersionService()
@@ -72,7 +77,14 @@ final class ToolStore: ObservableObject {
             if oldValue.store != settings.store, hasSearched { search() }
         }
     }
-    @Published var tab = 0
+    /// The selected tab lives in its own object: only the tab bar observes
+    /// it, so switching tabs doesn't make every page that watches the store
+    /// rebuild (issue #41).
+    let tabs = TabState()
+    var tab: Int {
+        get { tabs.selection }
+        set { tabs.selection = newValue }
+    }
     @Published var searchText = ""
     @Published private(set) var searchError: String?
     @Published private(set) var lastSearchTerm = ""
@@ -891,6 +903,15 @@ final class ToolStore: ObservableObject {
     }
 
     /// Whether a download of this app is already on its way.
+    /// The newest finished download of each app with a newer store version.
+    var updatableJobs: [DownloadJob] {
+        var seen = Set<String>()
+        return downloads.jobs.filter { job in
+            guard job.status == .completed, let key = job.updateKey, availableUpdates[key] != nil else { return false }
+            return seen.insert(key).inserted
+        }
+    }
+
     private func updateInProgress(_ key: String) -> Bool {
         downloads.jobs.contains { $0.updateKey == key && [.queued, .running, .pausing, .paused, .processing].contains($0.status) }
     }
@@ -1092,8 +1113,15 @@ final class ToolStore: ObservableObject {
             Task { do { try await downloads.importFile(url) } catch { errorMessage = error.localizedDescription } }
         } else if url.scheme == "ipadn" {
             let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-            if let id = components?.queryItems?.first(where: { $0.name == "id" })?.value { tab = 0; search(id) }
-            else if let address = components?.queryItems?.first(where: { $0.name == "url" })?.value,
+            let items = components?.queryItems ?? []
+            if url.host == "open", let value = items.first(where: { $0.name == "tab" })?.value, let target = Int(value), (0...3).contains(target) {
+                // Widget shortcuts: a tab, optionally checking downloaded apps for updates.
+                tab = target
+                if items.contains(where: { $0.name == "check" && $0.value == "updates" }) {
+                    Task { await checkForUpdates(force: true) }
+                }
+            } else if let id = items.first(where: { $0.name == "id" })?.value { tab = 0; search(id) }
+            else if let address = items.first(where: { $0.name == "url" })?.value,
                     let download = URL(string: address) {
                 do { try downloads.enqueueURL(download); tab = 1 } catch { errorMessage = error.localizedDescription }
             }

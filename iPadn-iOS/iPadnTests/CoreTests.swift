@@ -940,6 +940,28 @@ final class CoreTests: XCTestCase {
         XCTAssertTrue(ReviewService.parse(Data("not json".utf8)).isEmpty)
     }
 
+    func testPackageComparisonListsChanges() {
+        var old = PackageInfo()
+        old.version = "1.0"; old.build = "10"; old.minimumOS = "15.0"
+        old.permissions = [.init(key: "NSCameraUsageDescription", reason: "Scan")]
+        old.frameworkNames = ["A.framework", "B.framework"]
+        old.urlSchemes = ["demo"]
+        var new = old
+        new.version = "1.1"; new.build = "11"
+        new.permissions.append(.init(key: "NSMicrophoneUsageDescription", reason: "Talk"))
+        new.frameworkNames = ["B.framework", "C.framework"]
+        let result = PackageComparison.compare(old, new)
+        XCTAssertEqual(result.basics.map(\.old), ["1.0", "10"])
+        XCTAssertEqual(result.basics.map(\.new), ["1.1", "11"])
+        XCTAssertEqual(result.permissions.added.count, 1)
+        XCTAssertTrue(result.permissions.removed.isEmpty)
+        XCTAssertEqual(result.frameworks.added, ["C.framework"])
+        XCTAssertEqual(result.frameworks.removed, ["A.framework"])
+        XCTAssertTrue(result.urlSchemes.isEmpty)
+        XCTAssertFalse(result.unchanged)
+        XCTAssertTrue(PackageComparison.compare(old, old).unchanged)
+    }
+
     func testPackageInfoReadsDeclarations() {
         let info = PackageInfoService.describe([
             "CFBundleDisplayName": "Demo", "CFBundleIdentifier": "com.example.demo",
@@ -968,6 +990,59 @@ final class CoreTests: XCTestCase {
         XCTAssertEqual(grouped.count, 2, "same-meaning keys share one row")
         XCTAssertEqual(grouped.first { $0.reasons.contains("Speakers") }?.reasons, ["Speakers"])
         XCTAssertEqual(grouped.first { $0.reasons.contains("Nearby") }?.reasons, ["Nearby", "Concerts"])
+    }
+
+    func testBlockedMetadataRaisesTheVersionID() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let record: [String: Any] = ["itemId": 477537958, "softwareVersionExternalIdentifier": 894270367, "bundleShortVersionString": "26.1.4"]
+        let package = folder.appendingPathComponent("Demo.ipa")
+        let archive = try Archive(url: package, accessMode: .create)
+        let data = try PropertyListSerialization.data(fromPropertyList: record, format: .xml, options: 0)
+        try archive.addEntry(with: "iTunesMetadata.plist", type: .file, uncompressedSize: Int64(data.count)) { position, size in
+            data.subdata(in: Int(position)..<Int(position) + size)
+        }
+        let blocked = try XCTUnwrap(NativeInstaller.blockedMetadata(of: package))
+        let result = try XCTUnwrap(PropertyListSerialization.propertyList(from: blocked, format: nil) as? [String: Any])
+        XCTAssertEqual(result["softwareVersionExternalIdentifier"] as? Int, NativeInstaller.blockedVersionID)
+        XCTAssertEqual(result["itemId"] as? Int, 477537958)
+        XCTAssertEqual(result["bundleShortVersionString"] as? String, "26.1.4")
+
+        let empty = folder.appendingPathComponent("Empty.ipa")
+        let bare = try Archive(url: empty, accessMode: .create)
+        try bare.addEntry(with: "Payload/", type: .directory, uncompressedSize: Int64(0)) { _, _ in Data() }
+        XCTAssertNil(try NativeInstaller.blockedMetadata(of: empty))
+
+        var app = NativeInstaller.InstalledApp(installed: true)
+        app.storeVersionID = String(NativeInstaller.blockedVersionID)
+        XCTAssertTrue(app.updatesBlocked)
+        app.storeVersionID = "894270367"
+        XCTAssertFalse(app.updatesBlocked)
+    }
+
+    func testWiFiTransferOnlyAnswersTheLocalNetwork() {
+        for address in ["192.168.0.12", "10.1.2.3", "172.16.0.1", "172.31.255.255", "169.254.1.1", "fe80::1", "fd12::3", "::ffff:192.168.1.5"] {
+            XCTAssertTrue(WiFiTransferServer.isPrivate(address), address)
+        }
+        for address in ["8.8.8.8", "172.32.0.1", "100.64.0.1", "2001:db8::1", "::ffff:1.1.1.1", "nonsense"] {
+            XCTAssertFalse(WiFiTransferServer.isPrivate(address), address)
+        }
+        XCTAssertEqual(WiFiTransferServer.escape("<a href=\"x\">&'"), "&lt;a href=&quot;x&quot;&gt;&amp;&#39;")
+        XCTAssertEqual(WiFiTransferServer.asciiName("网易云_1.0.ipa"), "____1.0.ipa")
+        let id = UUID()
+        XCTAssertEqual(WiFiTransferView.publicName(id.uuidString + "-App_1.0.ipa", id: id), "App_1.0.ipa")
+        XCTAssertEqual(WiFiTransferView.publicName("Other.ipa", id: id), "Other.ipa")
+    }
+
+    func testChartFeedParses() {
+        let entry = { (id: String) in #"{"im:name":{"label":"App"},"id":{"label":"https://apps.apple.com/app/id\#(id)","attributes":{"im:id":"\#(id)","im:bundleId":"a.b"}},"category":{"attributes":{"im:id":"6014"}}}"# }
+        let list = Data(#"{"feed":{"entry":[\#(entry("111")),\#(entry("222")),\#(entry("111"))]}}"#.utf8)
+        XCTAssertEqual(ChartService.parse(list), ["111", "222"])
+        XCTAssertEqual(ChartService.parse(Data(#"{"feed":{"entry":\#(entry("333"))}}"#.utf8)), ["333"])
+        XCTAssertTrue(ChartService.parse(Data(#"{"feed":{}}"#.utf8)).isEmpty)
+        XCTAssertEqual(AppChart.paid.feed(.iPadOS), "toppaidipadapplications")
+        XCTAssertNil(AppChart.free.feed(.tvOS))
     }
 
     func testRegionLocalesFindTheirScript() {
