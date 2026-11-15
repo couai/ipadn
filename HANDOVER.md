@@ -1,27 +1,69 @@
 # iPadn 项目全面交接与问题排查文档 (HANDOVER.md)
 
-> **更新时间**：2026-11-14（2.1.1 / build 31 发布准备；家庭共享暂停）
+> **更新时间**：2026-11-15（2.1.3 / build 33 发布准备；2.1.2 已正式发布；家庭共享暂停）
 > **代码仓库**：`https://github.com/mengangs/ipadn.git` (`main` 分支)  
 > **本地工作区**：`D:\iOS-Dev\projects\ipadn` (映射到 WSL2: `/mnt/d/iOS-Dev/projects/ipadn`)  
 > **目标产品**：iOS 原生应用 `iPadn` (`app.local.iPadn`)
 
 ---
 
+## 2026-11-15 iPadn 2.1.3（build 33）与当前交接
+
+### 当前代码与发布状态
+
+- 本地修复提交 `21c138e`（`fix: resolve delisted search crash, isolate notice animation, and polish pairing UX`）包含三项修复与优化：
+  1. **搜索闪退与并发竞争修复**（`ToolStore.swift`、`StoreService.swift`）：移除关键词搜索前的 `Task.detached` / `awaitProbeWithGrace` 与 `verifyDelistedStatuses` 嵌套 `withTaskGroup` 并发竞争取消，改为在商店搜索返回后通过 `startDelistedVerificationIfNeeded` 顺序核验最多 15 个候选（`batch.count <= 100` 直接调用 `lookupChunk`），并在新搜索、`cancelSearch()` 或关闭「搜索时优先显示已下架应用」时显式取消 `delistedVerifyTask`。
+  2. **提示动画隔离与账号切换响应**（`SharedViews.swift`、`ToolStore.swift`）：将顶部提示/撤销横幅拆入 `RootNoticeOverlay` 隔离弹簧动画，避免触发 `RootView` 整棵 `TabView` 重绘；`switchAccount` 通过 `await Task.yield()` 让提示横幅先渲染再触发地区更新、重新搜索与 `refreshOwned()`。
+  3. **本机配对引导与灵动岛交接优化**（`OnDevicePairing.swift`、`InstallationSettingsView.swift`、`PairingLiveActivity.swift`、`Localizable.xcstrings`、`NativeInstallerTests.swift`）：点按「打开设置」时调用 `notifyHandoffIfWaiting()` 释放后台音频并推送第 1 步灵动岛横幅提示，完善 `.connected`/`.code` 后台交接与 0.1 秒切片可取消等待，更新 11 种语言配对引导文案及第 1 步 `AlertConfiguration` 单测断言。
+- **2.1.3 / build 33 发布准备**：保留已有 `v2.1.2` Release 不覆盖不删除；`generate_project.py`、生成的 `iPadn.xcodeproj` 与本地不入库 `Config/xtool/*.plist` 已更新为 `2.1.3 / 33`，`RELEASE_NOTES.md`、`README.md`、`README_EN.md` 与本文档已同步；待本地校验通过、推送 `main` 并触发完整 GitHub Actions CI（`run_tests=true`、`run_ui_tests=true`、`ui_test_scope=full`、`publish_release=true`）全通过后自动发布 `v2.1.3`（标准版、精简版 IPA 及更新 `altstore-source.json`）。
+
+## 2026-11-15 iPadn 2.1.2（build 32）与当前交接
+
+### 当前代码与发布状态
+
+- 已合并 PR [#89](https://github.com/mengangs/ipadn/pull/89)（`docs/2.1.1-handover`，提交 `4c9f025` → 合并 `3861f82`），补全 2.1.1 发布与核验记录；家庭共享功能（#82）仍维持暂停状态。
+- 功能分支 `feat/experience-and-install-polish`（最终提交 `aea4634`）在完整 GitHub Actions CI [43704876456](https://github.com/mengangs/ipadn/actions/runs/43704876456) 全通过后合并至 `main`（合并提交 `6ff7b15`）：
+  - `iPadnTests.xctest`：224 项执行，0 失败；
+  - `iPadnUITests.xctest`（`full` 范围，`iPhone 18 Pro` iOS 27.2 Simulator）：34 项执行，33 通过，1 项因机型条件跳过（`testDuoLayoutScreens`），0 失败；`test-summary.json` 汇总 257 通过、1 跳过、0 失败；`ipa-verification.json` 通过（含高刷新率声明）。可选折叠屏步骤 `iPhone Duo screenshots`（`continue-on-error: true`）15 分钟超时未产出截图，不影响主测试门禁。
+- **2.1.2 真机验收（iPhone 15 Pro）**：已通过 `python scripts/xtool_build.py --deploy`（含 `xtool_postbuild.py` Mach-O SDK 兼容标记 26.0 与高刷新率校验）在 `iPhone 15 Pro` 部署并验证最终 UI 改动（含 `2.1.2 / build 32` 正常启动）：操作按钮居中形变、云朵与 `3.0pt` 等宽底轨黑白 `ProgressRing`、侧滑原生动画、底部标签栏搜索/账号动效、下载与历史版本交互；配对灵动岛/后台策略及历史版本校准逻辑同步由 CI `43704876456` 的 `CoreTests` / `NativeInstallerTests` / `iPadnUITests` 覆盖验证。真实设备账号（`1251098224@qq.com`）、已导入配对文件与最近搜索（`forward`）均完整保留，临时测试下载任务已清理。
+- **最新正式版本为 [2.1.2 / build 32](https://github.com/mengangs/ipadn/releases/tag/v2.1.2)**：由 `main` 提交 `0cf33a5` 触发完整 CI 与发布流水线 [43710252575](https://github.com/mengangs/ipadn/actions/runs/43710252575) 于 2026-11-15 12:17:53 UTC（北京时间 20:17:53）正式发布：
+  - `iPadnTests.xctest`：224 项通过，0 失败；
+  - `iPadnUITests.xctest`（`full` 范围，`iPhone 18 Pro` iOS 27.2 Simulator）：34 项执行，33 通过，1 项因机型跳过（`testDuoLayoutScreens`），0 失败；`iPhone Duo screenshots` 中 `testDuoLayoutScreens` 单独通过（85.821 秒）；`ipa-verification.json` 通过（`2.1.2 / build 32`，`high_refresh_rate: true`）。
+  - AltStore 源已自动更新为提交 `3277008`，随后已补充完善 `README.md`、`README_EN.md`、`RELEASE_NOTES.md`（含已下架应用关键词优先搜索、下载设置开关及同步微光说明），并同步更新线上 Release 说明与 `altstore-source.json`。
+
+| 发布资产 | 字节数 | SHA-256 |
+| --- | ---: | --- |
+| `iPadn-2.1.2-unsigned.ipa` | 49,466,076 | `35557d2e13a46f637f10feb30c96b497952e869adab22d1ef29e3f1a77595af0` |
+| `iPadn-2.1.2-lite-unsigned.ipa` | 49,328,014 | `a8bb075ffe40cf7d832ed712a2fc1f84b353cac18e6b37b6031c350d4fadb531` |
+
 ## 2026-11-14 iPadn 2.1.1（build 31）与当前交接
 
 ### 当前代码与发布状态
 
-- 2.1.0 / build 30 已通过 #84 合并并发布标准版、精简版 IPA，AltStore 源已更新。下文 2026-11-13 的“发布准备”“未合并、未发布”是过程记录，不代表当前状态。
+- **最新正式版本为 [2.1.1 / build 31](https://github.com/mengangs/ipadn/releases/tag/v2.1.1)**，于 2026-11-14 05:53:21 UTC（北京时间 13:53:21）发布，标准版、精简版、SHA-256 与 build-info.json 均已上传并核验。此前 2.1.0 / build 30 也已通过 #84 发布；下方历史章节中的“发布准备”“未合并、未发布”仅为过程记录，不代表当前状态。
 - iOS 16 安装设置崩溃修复 #86 已 squash 合并至 main，提交 `c7e69cbdaa1de14e1474590db32fc19020ea5c36`，关联 #83 已关闭。精确 PR 头 `12e6a0242ae664ed7d54089e08511fb051435f00` 的完整 CI 43538859143：193 项通过、0 失败、1 跳过，设备 IPA 检查与 Duo 截图成功；合并后的 main CI 43544630434 也已成功。未独立使用 iOS 16 真机复验；贡献者提供的真机验证不冒充本次实测。
-- 日期筛选排版 #87（`fix/date-filter-layout`，验收头 `9a046d8`）已按用户授权 squash 合并至 main，提交 `c96cad0a075fb2dfe8cbbf8dfeba12c708fc2e66`。完整 CI 43537751532 成功，192 项通过、0 失败、1 跳过。此前 iPhone 隔离预览验证展开、查询、清除布局，不等于真实历史下载或安装验收。先前合并权限拦截已在用户退出 Auto 模式后解除，正常合并成功；没有打标签或发布新版。
+- 日期筛选排版 #87（`fix/date-filter-layout`，验收头 `9a046d8`）已按用户授权 squash 合并至 main，提交 `c96cad0a075fb2dfe8cbbf8dfeba12c708fc2e66`。完整 CI 43537751532 成功，192 项通过、0 失败、1 跳过。此前 iPhone 隔离预览验证展开、查询、清除布局，不等于真实历史下载或安装验收。先前合并权限拦截已在用户退出 Auto 模式后解除，正常合并成功；该修复合并时未单独发布，现已纳入 2.1.1。
 - 用户最新授权：撤回未发布试验，更新文档并发布 2.1.1；覆盖此前“先不发布”的决定。家庭共享仍暂不开发，不增加其他功能或扩展。
 
-### 2.1.1 发布范围与验收状态
+### 2.1.1 发布范围与最终验收
 
 - 本次为修复版本：包含 #86 的 iOS 16 安装设置崩溃修复与商店链接容错，以及 #87 的历史版本日期范围筛选布局优化；不新增下载/安装功能，不改变 iOS 16 最低支持要求。
 - 用户已取消 iCloud 方向，本轮未发布试验代码、入口、源码引用、研究文档与专用临时文件已移除，恢复正常应用入口。没有引入云端能力、凭据同步或自动上传；不清空用户账号、下载记录与安装包，也不扫描/删除私人云目录。后续不自行重启该研究。
-- 版本源统一为 2.1.1 / build 31，应用与既有实时活动/小组件扩展一致；标准版与精简版继续同时发布。中英 README 和 RELEASE_NOTES.md 已同步。AltStore 源仅在正式发布成功后更新，不提前伪造可下载条目。
-- 当前发布分支 `release/2.1.1` 基于 `c96cad0`，产品 Swift 代码恢复为已合并 main。main CI 43549440259 已成功；这不替代新版本提交的完整验收。2.1.1 的本地构建、完整 CI、PR 合并与发布状态以下续实际结果为准，未完成前不写成已发布。
+- 版本源统一为 2.1.1 / build 31，应用与既有实时活动/小组件扩展一致；标准版与精简版继续同时发布。中英 README 和 RELEASE_NOTES.md 已同步。AltStore 源已在正式发布成功后更新，提交 `b8eaa07`；已核对最新条目的版本 2.1.1 / build 31、标准版 URL、大小 48,839,470 字节及最低系统 16.0。
+- 发布候选分支 `release/2.1.1` 基于 `c96cad0`，产品 Swift 代码恢复为已合并 main；候选提交 `463903167c7b9199c5866923fee5870b2c6163b4`。本地 xtool 原生编译、项目/11 语言校验及离线 runtime smoke 均通过，应用与扩展版本为 2.1.1 / 31，主程序已确认不含撤回试验标记。
+- 用户另行授权恢复手机正常版，已覆盖安装并不带预览参数启动，裁剪截图确认正常搜索主页。未卸载应用、未清空账号/设置/下载/安装包；仅检查精确的隔离测试书签路径，文件不存在，无需删除；未扫描私人云目录或安装其他应用。
+- 2.1.1 完整验收 CI [43556982478](https://github.com/mengangs/ipadn/actions/runs/43556982478) 成功：193 项通过、0 失败、1 跳过；设备 Release IPA 校验与 Duo 截图通过。已下载并核验 test-summary.json 与 ipa-verification.json（版本 2.1.1 / build 31）。本地监控曾被低内存保护停止，不是云端 CI 失败；随后只读查询确认最终成功。
+- 发布 PR [#88](https://github.com/mengangs/ipadn/pull/88) 已在用户重新明确授权后 squash 合并，提交 `c4052f41506ff8e0d5412dd953eaca1c96dfccfe`，合并时间 2026-11-14 05:34:59 UTC。已确认该合并提交的完整 Git tree 与上述通过完整验收的候选一致；此前的 Auto 权限拦截已解除，没有绕过。标签 `v2.1.1` 指向该合并提交，正式发布已完成。
+- 标签构建与发布流水线 [43562300300](https://github.com/mengangs/ipadn/actions/runs/43562300300) 的 build、publish-release 均成功；标签流程另跑 163 项单元测试，0 失败、0 跳过，不将其冒充完整 UI 验收（完整 193/0/1 见上）。原生安装探针 CI [43562300321](https://github.com/mengangs/ipadn/actions/runs/43562300321) 也成功；这不等于本次在日常手机执行了第三方应用安装或回环验收。
+- 实际下载发布资产后确认：两个 IPA 的 ZIP CRC、SHA-256、应用版本/构建、最低 iOS 16.0、未签名状态均符合预期；标准版含 1 个既有扩展，精简版无扩展，扩展版本/构建一致。两个主程序均未发现已撤回试验的入口/状态文件标记。build-info.json 对应发布提交 `c4052f4` 和流水线 43562300300。
+
+| 发布资产 | 字节数 | SHA-256 |
+| --- | ---: | --- |
+| `iPadn-2.1.1-unsigned.ipa` | 48,839,470 | `1bde6a820e8206394e574ceb160dc3b77d47b25c7d261069bb30eb9fa237b7bc` |
+| `iPadn-2.1.1-lite-unsigned.ipa` | 48,708,836 | `72990667fc08f63aa5296f434ba8e8014b33ec48f55dce51ccc70eae317a5d07` |
+
+- 对应 `.sha256` 文件与 `build-info.json` 均已发布。公开包为 CI 生成的未签名版本；手机上覆盖安装的是本地签名的同版正常构建，不混称为对公开 Release 二进制的真机安装验收。
+- 本段最终验收/手机恢复/发布状态通过后续文档更新记录，不冒充这些结果已包含在 PR #88 的验收提交中。README 中英版、RELEASE_NOTES.md、版本源和生成项目已由 #88 入库，AltStore 源已由发布工作流更新；本次文档收尾不修改应用逻辑或移动发布标签。
 
 ### 家庭共享应用下载（#82）：暂停，缺少有效测试样本
 

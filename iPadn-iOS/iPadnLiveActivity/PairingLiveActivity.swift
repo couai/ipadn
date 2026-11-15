@@ -14,8 +14,8 @@ struct iPadnLiveActivityBundle: WidgetBundle {
 private extension PairingActivityAttributes.ContentState {
     var title: String {
         switch step {
-        case 1: return String(localized: "打开「设置」")
-        case 2: return String(localized: "正在配对")
+        case 1: return String(localized: "前往开发者模式")
+        case 2: return String(localized: "等待连接并解锁")
         case 3: return String(localized: "输入配对码")
         case 4: return String(localized: "配对完成")
         default: return String(localized: "配对未完成")
@@ -23,9 +23,9 @@ private extension PairingActivityAttributes.ContentState {
     }
     func detail(host: String) -> String {
         switch step {
-        case 1: return String(localized: "隐私与安全性 › 开发者模式 › 与 \(host) 配对")
-        case 2: return String(localized: "设备已连接，正在生成配对码")
-        case 3: return String(localized: "在「设置」中输入下面的配对码")
+        case 1: return String(localized: "设置首页 › 隐私与安全性 › 开发者模式 › 选 \(host)")
+        case 2: return String(localized: "如有锁屏密码弹窗请先输入，正在等待配对码")
+        case 3: return String(localized: "在「设置」弹窗中输入下面的 6 位配对码")
         case 4: return String(localized: "回到 \(host) 继续安装")
         default: return message ?? String(localized: "回到 \(host) 重试")
         }
@@ -67,11 +67,12 @@ private struct CodeText: View {
 /// Steps 1 to 3 as dots, so the user sees how far along they are.
 private struct StepDots: View {
     let step: Int
+    var tint: Color = .blue
     var body: some View {
         HStack(spacing: 5) {
             ForEach(1...3, id: \.self) { index in
                 Capsule()
-                    .fill(index <= step || step == 4 ? Color.accentColor : Color.secondary.opacity(0.35))
+                    .fill(step > 0 && (index <= step || step == 4) ? tint : Color.secondary.opacity(0.35))
                     .frame(width: index == step ? 16 : 6, height: 6)
             }
         }
@@ -92,7 +93,7 @@ struct PairingLiveActivity: Widget {
                             .font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
                     }
                     Spacer(minLength: 0)
-                    StepDots(step: state.step)
+                    StepDots(step: state.step, tint: state.tint)
                 }
                 if let code = state.code, state.step == 3 {
                     CodeText(code: code, size: 40).frame(maxWidth: .infinity)
@@ -107,7 +108,7 @@ struct PairingLiveActivity: Widget {
                     AppMarkView(size: 34).padding(.leading, 4)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    StepDots(step: state.step).padding(.trailing, 4).padding(.top, 8)
+                    StepDots(step: state.step, tint: state.tint).padding(.trailing, 4).padding(.top, 8)
                 }
                 DynamicIslandExpandedRegion(.center) {
                     Label(state.title, systemImage: state.symbol).font(.headline).foregroundStyle(state.tint).lineLimit(1)
@@ -126,8 +127,14 @@ struct PairingLiveActivity: Widget {
             } compactTrailing: {
                 if let code = state.code, state.step == 3 {
                     CodeText(code: code, size: 15).foregroundStyle(state.tint)
+                } else if state.step == 0 {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(state.tint)
                 } else {
-                    Text(state.step == 4 ? String(localized: "完成") : "\(min(max(state.step, 1), 3))/3").font(.caption.weight(.semibold))
+                    Text(state.step == 4 ? String(localized: "完成") : "\(min(max(state.step, 1), 3))/3")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(state.step == 4 ? state.tint : .primary)
                 }
             } minimal: {
                 AppMarkView(size: 22)
