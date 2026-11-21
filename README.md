@@ -7,17 +7,17 @@
 **在 iPhone 和 iPad 上搜索、下载、安装你拥有的 App。**
 支持 iPhone、iPad、Apple TV 与 Mac 应用，包括历史版本与已下架应用。
 
-✨ **v2.3.2 完整已购历史与下架应用补全 · TestFlight 登录与深色模式更新标签修复** · 📢 **反馈与新版优先前往 [官方 Telegram 频道](https://t.me/ipadn_official)**
+✨ **v2.3.3 Apple 下载报错修复与诊断完善 · 下载多选/统一撤销、SDK 速查与全量性能安全加固** · 📢 **反馈与新版优先前往 [官方 Telegram 频道](https://t.me/ipadn_official)**
 
-[![最新版本](https://img.shields.io/github/v/release/mengangs/ipadn?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC&logo=github&logoColor=white&color=007AFF)](https://github.com/mengangs/ipadn/releases/latest)
-[![Telegram 频道](https://img.shields.io/badge/Telegram-%40ipadn__official-26A5E4?logo=telegram&logoColor=white)](https://t.me/ipadn_official)
-[![下载量](https://img.shields.io/github/downloads/mengangs/ipadn/total?label=%E4%B8%8B%E8%BD%BD%E9%87%8F&logo=icloud&logoColor=white&color=34C759)](https://github.com/mengangs/ipadn/releases)
-![系统要求](https://img.shields.io/badge/iOS%20%2F%20iPadOS-16%2B-5856D6?logo=apple&logoColor=white)
-[![许可证](https://img.shields.io/github/license/mengangs/ipadn?label=%E8%AE%B8%E5%8F%AF%E8%AF%81&logo=opensourceinitiative&logoColor=white&color=FF9500)](LICENSE)
+[![最新版本](https://img.shields.io/github/v/release/mengangs/ipadn?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC&logo=github&logoColor=white&labelColor=2E3136&color=3A6EA5)](https://github.com/mengangs/ipadn/releases/latest)
+[![Telegram 频道](https://img.shields.io/badge/Telegram-%40ipadn__official-2C82A9?logo=telegram&logoColor=white&labelColor=2E3136)](https://t.me/ipadn_official)
+[![下载量](https://img.shields.io/github/downloads/mengangs/ipadn/total?label=%E4%B8%8B%E8%BD%BD%E9%87%8F&logo=icloud&logoColor=white&labelColor=2E3136&color=2D8A68)](https://github.com/mengangs/ipadn/releases)
+![系统要求](https://img.shields.io/badge/iOS%20%2F%20iPadOS-16%2B-525D73?logo=apple&logoColor=white&labelColor=2E3136)
+[![许可证](https://img.shields.io/github/license/mengangs/ipadn?label=%E8%AE%B8%E5%8F%AF%E8%AF%81&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAzYTEgMSAwIDAgMC0xIDF2MUg1LjVhMSAxIDAgMSAwIDAgMmguMzhsLTIuNiA1LjJBMy41IDMuNSAwIDAgMCA2LjUgMTZhMy41IDMuNSAwIDAgMCAzLjIyLTMuOEw3LjEyIDdIMTF2MTJIN2ExIDEgMCAxIDAgMCAyaDEwYTEgMSAwIDEgMCAwLTJoLTRWN2gzLjg4bC0yLjYgNS4yQTMuNSAzLjUgMCAwIDAgMTcuNSAxNmEzLjUgMy41IDAgMCAwIDMuMjItMy44TDE4LjEyIDdoLjM4YTEgMSAwIDEgMCAwLTJIMTNWNGExIDEgMCAwIDAtMS0xeiIvPjwvc3ZnPg%3D%3D&labelColor=2E3136&color=525D73)](LICENSE)
 
 <p>
-  <a href="#支持-ipadn"><img src="https://img.shields.io/badge/%E6%94%AF%E6%8C%81%20iPadn-%E5%85%8D%E8%B4%B9%E5%BC%80%E6%BA%90%20%C2%B7%20%E8%AF%B7%E4%BD%9C%E8%80%85%E5%96%9D%E6%9D%AF%E5%92%96%E5%95%A1-EA4AAA?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="支持 iPadn"></a>
-  <a href="https://afdian.com/a/mengangs"><img src="https://img.shields.io/badge/%E7%88%B1%E5%8F%91%E7%94%B5-%E8%B5%9E%E5%8A%A9%E6%94%AF%E6%8C%81-946CE6?style=for-the-badge&logo=buymeacoffee&logoColor=white" alt="爱发电赞助"></a>
+  <a href="#支持-ipadn"><img src="https://img.shields.io/badge/%E6%94%AF%E6%8C%81%20iPadn-%E5%85%8D%E8%B4%B9%E5%BC%80%E6%BA%90%20%C2%B7%20%E8%AF%B7%E4%BD%9C%E8%80%85%E5%96%9D%E6%9D%AF%E5%92%96%E5%95%A1-B0436E?style=for-the-badge&logo=githubsponsors&logoColor=white&labelColor=2E3136" alt="支持 iPadn"></a>
+  <a href="https://afdian.com/a/mengangs"><img src="https://img.shields.io/badge/%E7%88%B1%E5%8F%91%E7%94%B5-%E8%B5%9E%E5%8A%A9%E6%94%AF%E6%8C%81-6759A8?style=for-the-badge&logo=buymeacoffee&logoColor=white&labelColor=2E3136" alt="爱发电赞助"></a>
 </p>
 
 **简体中文** · [English](README_EN.md)
@@ -45,12 +45,19 @@
 
 ---
 
+## 2.3.3 更新
+
+- **修复下载/获取偶发「Apple 暂时无法完成该操作」与诊断盲区**：补齐 `1008` 会话过期自动刷新、`-128`（`CountryMismatch`）账号商店地区自动纠偏、`buyProductFailure` 新版条款（`termsPage`）明确提示及密码变更/账号停用文案；Apple HTTP 200 业务失败现自动写入严格脱敏的 `RequestFailureLog`，未知数字错误码同步显示在提示中便于快速定位。
+- **「下载」页多选升级与统一撤销**：就地勾选交互对齐「应用包」，纳入 TestFlight 任务全选与批量删除，并合并常规下载与 TestFlight 的 5 秒撤销倒计时栈。
+- **SDK / Xcode 版本速查与左滑遮罩修复**：在包体与 TestFlight 详情新增构建 SDK / Xcode 版本速查；修复专业模式「应用包」与「解密记录」左滑时整行变灰遮罩的问题。
+- **全量安全、性能与 11 语言体验加固**：加固日志脱敏、TestFlight 多账号 Cookie 隔离与 `TFSINF` `cryptid` 校验；移除主线程磁盘 I/O 提升长列表滚动帧率；补齐 11 语言本地化、RTL、深浅色对比度与头像质感打磨。详见 [更新说明](RELEASE_NOTES.md)。
+
 ## 2.3.2 更新
 
 - **完整同步「已购项目」历史与已下架应用**：在原有 DMAP 目录之外接入 Apple 完整购买历史接口（`/commerce/account/purchases`）并与 DMAP 合并，补齐多年历史与已下架应用及多语言购买日期；首次全量同步采用 **6 路并发**（顶部显示年份进度），后续日常刷新仅增量扫描当年，几秒即可完成，右上角菜单亦支持手动触发「同步完整购买历史」。
 - **修复切换账号后已购图标卡在灰色占位**：消除切号后防抖更新地区时误中止图标拉取的竞态，改为按 `地区|AppID` 去重并以每批 50 个稳定拉取，保留已有缓存不闪烁。
 - **修复 TestFlight 登录误报与设备身份缓存失效**：自动清理触发 `rinfo=67437824` 的过期 `iphone` 设备槽并重新配置；修复错误分类误将 `"iphone"` 匹配为 `"phone"` 导致提示「暂不支持选择多个受信任号码」的问题。
-- **修复深色模式「可更新」标签看不清**：「账号 › 设置」行右侧更新胶囊前景色改为自适应 `UX.onAccent`，深浅色模式下均清晰可辨。详见 [更新说明](RELEASE_NOTES.md)。
+- **修复深色模式「可更新」标签看不清**：「账号 › 设置」行右侧更新胶囊前景色改为自适应 `UX.onAccent`，深浅色模式下均清晰可辨。
 
 ## 2.3.1 更新
 
@@ -349,8 +356,8 @@ iPadn **免费、开源、没有广告**。<br>
 如果它帮你省下了时间，或者你只是喜欢这个项目，欢迎请作者喝杯咖啡 ☕<br>
 你的鼓励是持续更新的动力。
 
-<a href="https://afdian.com/a/mengangs"><img src="https://img.shields.io/badge/%E7%88%B1%E5%8F%91%E7%94%B5-%E8%AF%B7%E4%BD%9C%E8%80%85%E5%96%9D%E6%9D%AF%E5%92%96%E5%95%A1-946ce6?style=for-the-badge&logo=buymeacoffee&logoColor=white" alt="爱发电"></a>
-<img src="https://img.shields.io/badge/USDT-BEP20-26a17b?style=for-the-badge&logo=tether&logoColor=white" alt="USDT BEP20">
+<a href="https://afdian.com/a/mengangs"><img src="https://img.shields.io/badge/%E7%88%B1%E5%8F%91%E7%94%B5-%E8%AF%B7%E4%BD%9C%E8%80%85%E5%96%9D%E6%9D%AF%E5%92%96%E5%95%A1-6759A8?style=for-the-badge&logo=buymeacoffee&logoColor=white&labelColor=2E3136" alt="爱发电"></a>
+<img src="https://img.shields.io/badge/USDT-BEP20-2D8A68?style=for-the-badge&logo=tether&logoColor=white&labelColor=2E3136" alt="USDT BEP20">
 
 | 爱发电（支付宝、微信） | USDT（BNB Smart Chain / BEP20） |
 | :---: | :---: |
