@@ -363,6 +363,19 @@ final class CoreTests: XCTestCase {
         let searchError = AppErrorMessage.forSearch(ToolError.message("Your password has changed.(2002)"))
         XCTAssertTrue(searchError.contains("重新登录"))
         XCTAssertFalse(searchError.contains("2002"))
+        let mismatch = AppleStorefrontDownloadError(
+            reason: .accountRegionMismatch(accountRegion: "US", storeRegion: "CN"),
+            targetCountry: "CN"
+        )
+        let prevLocale = AppText.locale
+        defer { AppText.locale = prevLocale }
+        AppText.locale = Locale(identifier: "zh-Hans")
+        let mismatchZh = mismatch.localizedDescription
+        XCTAssertTrue(mismatchZh.contains("美国") || mismatchZh.contains("US"))
+        XCTAssertTrue(mismatchZh.contains("中国") || mismatchZh.contains("CN"))
+        AppText.locale = Locale(identifier: "en")
+        let mismatchEn = mismatch.localizedDescription
+        XCTAssertTrue(mismatchEn.lowercased().contains("region"))
     }
 
     func testTvOSDownloadPreservesAndRestoresArtwork() {
@@ -2051,6 +2064,30 @@ final class CoreTests: XCTestCase {
         try FileManager.default.removeItem(at: fileURL)
         let evicted = try await store.load(fileKey, requiringIcon: true) { missing }
         XCTAssertEqual(evicted.iconAvailable, false, "Evicted files must be rechecked, not shown as available")
+
+        // Unverified missing-icon entries (failed before reading Info.plist, leaving both
+        // released and buildVersion nil) must self-heal when an icon is requested.
+        let poisonedKey = key + "-poisoned"
+        let poisoned = VersionMetadata(version: "21.45.4", released: nil, packageSize: 275_263_421,
+                                       iconAvailable: false, ticketChecked: true,
+                                       metadataSchema: VersionMetadata.currentSchema,
+                                       bundleShortVersion: "21.45.4", buildVersion: nil)
+        _ = try await store.load(poisonedKey, requiringPackageSize: true, requiringIcon: false) { poisoned }
+        let healedCalls = LockedCount()
+        let healedMeta = VersionMetadata(version: "21.45.4", released: Date(timeIntervalSince1970: 1_714_694_400),
+                                         packageSize: 275_263_421, iconAvailable: false, ticketChecked: true,
+                                         metadataSchema: VersionMetadata.currentSchema,
+                                         bundleShortVersion: "21.45.4", buildVersion: "21.45.4")
+        let healed = try await store.load(poisonedKey, requiringPackageSize: true, requiringIcon: true) {
+            healedCalls.increment()
+            return healedMeta
+        }
+        XCTAssertEqual(healedCalls.value, 1, "Unverified missing-icon cache entries must retry once")
+        XCTAssertEqual(healed.buildVersion, "21.45.4")
+        let settledHit = try await store.load(poisonedKey, requiringPackageSize: true, requiringIcon: true) {
+            throw RemoteZip.Failure.unreadable
+        }
+        XCTAssertEqual(settledHit.buildVersion, "21.45.4", "Verified missing-icon entries with Info.plist metadata stay cached")
     }
 
     func testVersionMetadataSizeCacheMigration() async throws {
@@ -3126,6 +3163,95 @@ final class CoreTests: XCTestCase {
             XCTAssertFalse((arranged.results + arranged.localResults).contains { $0.id == "999999999" })
         }
     }
+
+    func testCommercePurchaseHistoryParsesAppsAndMergesWithDMAP() throws {
+        let payload = """
+        {
+          "data": {
+            "attributes": {
+              "is-complete": false,
+              "purchases": [
+                {
+                  "order-id": "ORD-100",
+                  "invoice-date": "Nov 19, 2026",
+                  "items": [
+                    { "item-id": "564177498", "item-name": "VKontakte", "kind": "iOS App", "purchase-date": "Nov 19, 2026" },
+                    { "item-id": "398465290", "item-title": "Odnoklassniki", "kind": "iOS App" },
+                    { "item-id": "999999991", "item-name": "Coins Pack", "kind": "In-App Purchase", "purchase-date": "Nov 19, 2026" },
+                    { "item-id": "999999992", "item-name": "Novel", "kind": "Book", "purchase-date": "Nov 19, 2026" }
+                  ]
+                },
+                {
+                  "order-id": "ORD-101",
+                  "invoice-date": "18 Oct 2024",
+                  "items": [
+                    { "item-id": 1166343427, "item-name": "RUTUBE", "kind": "iOS App", "purchase-date": "18 Oct 2024" },
+                    { "item-id": "414478124", "item-name": "WeChat Commerce", "kind": "Mac App", "purchase-date": "2024-10-18" }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+        """
+        var seen = Set<String>()
+        let first = try CommercePurchaseHistory.parsePage(Data(payload.utf8), seenOrderIDs: &seen)
+        XCTAssertFalse(first.isComplete)
+        XCTAssertEqual(first.newInvoiceCount, 2)
+        XCTAssertEqual(first.apps.map(\.id), ["564177498", "398465290", "1166343427", "414478124"])
+        XCTAssertEqual(first.apps.first { $0.id == "398465290" }?.name, "Odnoklassniki")
+        XCTAssertNotNil(first.apps.first { $0.id == "564177498" }?.purchaseDate)
+        XCTAssertNotNil(first.apps.first { $0.id == "1166343427" }?.purchaseDate)
+
+        // Replayed page with the same order IDs must contribute zero new invoices.
+        let replay = try CommercePurchaseHistory.parsePage(Data(payload.utf8), seenOrderIDs: &seen)
+        XCTAssertEqual(replay.newInvoiceCount, 0)
+        XCTAssertTrue(replay.apps.isEmpty)
+
+        let iconURL = URL(string: "https://example.com/wechat.png")!
+        let dmapWeChat = OwnedApp(
+            id: "414478124",
+            bundleID: "com.tencent.xin",
+            name: "WeChat",
+            version: "8.0.50",
+            purchaseDate: Date(timeIntervalSince1970: 1_700_000_000),
+            iconURL: nil
+        )
+        let cachedWeChat = OwnedApp(
+            id: "414478124",
+            bundleID: "",
+            name: "WeChat",
+            version: "",
+            purchaseDate: nil,
+            iconURL: iconURL
+        )
+        let merged = CommercePurchaseHistory.merge(dmap: [dmapWeChat], commerce: first.apps, cached: [cachedWeChat])
+        XCTAssertEqual(merged.count, 4, "Sanctioned/delisted commerce apps must survive merge alongside DMAP records")
+        let wechat = try XCTUnwrap(merged.first { $0.id == "414478124" })
+        XCTAssertEqual(wechat.bundleID, "com.tencent.xin")
+        XCTAssertEqual(wechat.version, "8.0.50")
+        XCTAssertEqual(wechat.iconURL, iconURL)
+        XCTAssertTrue(merged.contains { $0.id == "564177498" && $0.name == "VKontakte" })
+        XCTAssertTrue(merged.contains { $0.id == "1166343427" && $0.name == "RUTUBE" })
+
+        XCTAssertEqual(CommercePurchaseHistory.pod(fromCookie: "foo=1; itspod=52; bar=2"), "52")
+        XCTAssertEqual(CommercePurchaseHistory.pod(fromHost: "p52-buy.itunes.apple.com"), "52")
+        XCTAssertNil(CommercePurchaseHistory.pod(fromHost: "buy.itunes.apple.com"))
+        XCTAssertNotNil(CommercePurchaseHistory.parseDate("2026年11月19日"))
+        XCTAssertNotNil(CommercePurchaseHistory.parseDate("Nov. 19, 2026"))
+        XCTAssertNotNil(CommercePurchaseHistory.parseDate("2026-11-19 04:12:33 Etc/GMT"))
+        XCTAssertNotNil(CommercePurchaseHistory.parseDate("19 нояб. 2026 г."))
+    }
+
+    #if canImport(TestFlightKit)
+    func testMultiPhoneVerificationClassifierIgnoresIPhoneIdentityError() {
+        XCTAssertFalse(TFHomeModel.isMultiPhoneVerificationError("返回内容无法解析：no usable iphone identity"))
+        XCTAssertFalse(TFHomeModel.isMultiPhoneVerificationError("no usable iphone identity"))
+        XCTAssertTrue(TFHomeModel.isMultiPhoneVerificationError("Multiple trusted phone numbers require SMS selection"))
+        XCTAssertTrue(TFHomeModel.isMultiPhoneVerificationError("select a trusted number for verification"))
+        XCTAssertTrue(TFHomeModel.isMultiPhoneVerificationError("missing phoneId in challenge"))
+    }
+    #endif
 }
 
 private final class LockedCount: @unchecked Sendable {
