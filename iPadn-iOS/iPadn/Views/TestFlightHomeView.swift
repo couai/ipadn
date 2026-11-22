@@ -236,10 +236,7 @@ struct TestFlightHomeView: View {
                     job: model.makeInstallJob(for: app, packageURL: packageURL),
                     packageFileURL: packageURL,
                     packageIconURL: model.iconFiles[app.id],
-                    isTestFlight: true,
-                    onInstalled: {
-                        model.markInstalled(app.id)
-                    }
+                    isTestFlight: true
                 )
                 .sheetNotice()
                 .environmentObject(store)
@@ -649,7 +646,6 @@ struct TestFlightHomeView: View {
 
     private func appRow(_ app: TFBetaApp, availability: TFAppAvailability) -> some View {
         let state = model.rowState(app)
-        let isInstalled = model.installedAppIDs.contains(app.id)
         let isInstalling = model.installingAppIDs.contains(app.id)
         return NavigationLink {
             TestFlightDetailView(app: app, model: model)
@@ -680,14 +676,14 @@ struct TestFlightHomeView: View {
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     } else {
-                        rowSubtitleView(app: app, state: state, isInstalled: isInstalled, isInstalling: isInstalling)
+                        rowSubtitleView(app: app, state: state, isInstalling: isInstalling)
                     }
                 }
 
                 Spacer(minLength: 8)
 
                 if availability == .testing {
-                    rowAccessory(app: app, state: state, isInstalled: isInstalled, isInstalling: isInstalling)
+                    rowAccessory(app: app, state: state, isInstalling: isInstalling)
                 }
             }
             .padding(.vertical, 4)
@@ -695,14 +691,14 @@ struct TestFlightHomeView: View {
     }
 
     @ViewBuilder
-    private func rowSubtitleView(app: TFBetaApp, state: TFRowState, isInstalled: Bool, isInstalling: Bool) -> some View {
+    private func rowSubtitleView(app: TFBetaApp, state: TFRowState, isInstalling: Bool) -> some View {
         let detail = model.details[app.id]
         switch state.stage {
         case .idle, .resolving, .installing, .downloading, .paused, .verifying:
-            twoLineOfficialMeta(app: app, detail: detail, isInstalled: false)
+            twoLineOfficialMeta(app: app, detail: detail)
         case .done:
             VStack(alignment: .leading, spacing: 2) {
-                twoLineOfficialMeta(app: app, detail: detail, isInstalled: isInstalled)
+                twoLineOfficialMeta(app: app, detail: detail)
                 if isInstalling, let note = model.installNotes[app.id] {
                     Text(verbatim: note)
                         .font(.caption2)
@@ -723,7 +719,7 @@ struct TestFlightHomeView: View {
     }
 
     @ViewBuilder
-    private func twoLineOfficialMeta(app: TFBetaApp, detail: TFAppDetail?, isInstalled: Bool) -> some View {
+    private func twoLineOfficialMeta(app: TFBetaApp, detail: TFAppDetail?) -> some View {
         let versionLine = Self.versionLine(app: app, detail: detail)
         let days = detail?.daysRemaining()
         VStack(alignment: .leading, spacing: 2) {
@@ -749,9 +745,6 @@ struct TestFlightHomeView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
-                }
-                if isInstalled {
-                    TagBadge(text: "已安装", tint: .green)
                 }
             }
         }
@@ -795,72 +788,64 @@ struct TestFlightHomeView: View {
     }
 
     @ViewBuilder
-    private func rowAccessory(app: TFBetaApp, state: TFRowState, isInstalled: Bool, isInstalling: Bool) -> some View {
+    private func rowAccessory(app: TFBetaApp, state: TFRowState, isInstalling: Bool) -> some View {
         let _ = capabilityRefreshTick
-        switch state.stage {
-        case .idle:
-            AppStoreActionButton(
-                phase: .capsule(title: AppText.text("获取"), filled: false, enabled: model.isSignedIn),
-                insideNavigationLink: true,
-                accessibilityLabelText: AppText.text("下载 \(app.name)")
-            ) {
-                model.start(app)
+        let phase: AppStoreActionPhase = {
+            switch state.stage {
+            case .idle:
+                return .capsule(title: "获取", filled: false, enabled: model.isSignedIn)
+            case .resolving, .installing:
+                return .loading
+            case .downloading:
+                return state.total > 0 ? .downloading(state.fraction) : .loading
+            case .paused:
+                return .capsule(title: "继续", filled: false, enabled: true)
+            case .verifying:
+                return .processing
+            case .done:
+                return isInstalling
+                    ? .processing
+                    : .capsule(title: "安装", filled: true, enabled: true)
+            case .failed:
+                return .capsule(title: "重试", filled: false, enabled: model.isSignedIn)
             }
-        case .resolving, .installing:
-            AppStoreActionButton(
-                phase: .loading,
-                insideNavigationLink: true,
-                accessibilityLabelText: AppText.text("取消下载 \(app.name)")
-            ) {
+        }()
+        let label: String = {
+            switch state.stage {
+            case .idle: return AppText.text("下载 \(app.name)")
+            case .resolving, .installing: return AppText.text("取消下载 \(app.name)")
+            case .downloading: return AppText.text("暂停")
+            case .paused: return AppText.text("继续")
+            case .verifying: return AppText.text("正在校验 \(app.name)")
+            case .done: return isInstalling ? AppText.text("正在安装 \(app.name)") : AppText.text("安装 \(app.name)")
+            case .failed: return AppText.text("重试下载 \(app.name)")
+            }
+        }()
+        let valueText: String? = {
+            if state.stage == .downloading, state.total > 0 {
+                return "\(Int((state.fraction * 100).rounded()))%"
+            }
+            return nil
+        }()
+        AppStoreActionButton(
+            phase: phase,
+            insideNavigationLink: true,
+            accessibilityLabelText: label,
+            accessibilityValueText: valueText
+        ) {
+            switch state.stage {
+            case .idle, .failed:
+                model.start(app)
+            case .resolving, .installing:
                 model.cancel(app)
-            }
-        case .downloading:
-            AppStoreActionButton(
-                phase: .loading,
-                insideNavigationLink: true,
-                accessibilityLabelText: AppText.text("暂停")
-            ) {
+            case .downloading:
                 model.pause(app)
-            }
-        case .paused:
-            AppStoreActionButton(
-                phase: .capsule(title: AppText.text("继续"), filled: false, enabled: true),
-                insideNavigationLink: true,
-                accessibilityLabelText: AppText.text("继续")
-            ) {
+            case .paused:
                 model.resume(app)
-            }
-        case .verifying:
-            AppStoreActionButton(
-                phase: .processing,
-                insideNavigationLink: true,
-                accessibilityLabelText: AppText.text("正在校验 \(app.name)")
-            ) {}
-        case .done:
-            if isInstalling {
-                AppStoreActionButton(
-                    phase: .processing,
-                    insideNavigationLink: true,
-                    accessibilityLabelText: AppText.text("正在安装 \(app.name)")
-                ) {
-                    installingApp = app
-                }
-            } else {
-                AppStoreActionButton(
-                    phase: .capsule(title: AppText.text("安装"), filled: !isInstalled, enabled: true),
-                    insideNavigationLink: true,
-                    accessibilityLabelText: AppText.text("安装 \(app.name)")
-                ) {
-                    installingApp = app
-                }
-            }
-        case .failed:
-            AppStoreActionButton(
-                phase: .capsule(title: AppText.text("重试"), filled: false, enabled: model.isSignedIn),
-                insideNavigationLink: true,
-                accessibilityLabelText: AppText.text("重试下载 \(app.name)")
-            ) {
-                model.start(app)
+            case .verifying:
+                break
+            case .done:
+                installingApp = app
             }
         }
     }
@@ -2260,7 +2245,7 @@ final class TFHomeModel: ObservableObject {
                 guard current.stage == .downloading else { return }
                 let now = ProcessInfo.processInfo.systemUptime
                 if var metric = self.transferMetrics[app.id] {
-                    if now - metric.sampledAt >= 0.25 || (total > 0 && received >= total) {
+                    if now - metric.sampledAt >= 0.2 || (total > 0 && received >= total) {
                         metric.record(bytes: received, at: now)
                         self.transferMetrics[app.id] = metric
                     }
@@ -2322,6 +2307,8 @@ final class TFHomeModel: ObservableObject {
                 }
                 await MainActor.run {
                     guard self.downloadTokens[app.id] == token else { return }
+                    self.transferMetrics[app.id] = TransferMetrics(bytes: 0, sampledAt: ProcessInfo.processInfo.systemUptime)
+                    self.lastProgressPublish[app.id] = 0
                     if self.rows[app.id]?.stage != .paused {
                         self.mark(app.id, stage: .downloading)
                     }
@@ -2409,9 +2396,7 @@ final class TFHomeModel: ObservableObject {
                         fileURL: report.output,
                         iconURL: completedItem.iconURL,
                         isTestFlight: true,
-                        onInstalled: { [weak self] in
-                            self?.markInstalled(app.id)
-                        }
+                        onInstalled: nil
                     )
                     AppContainer.shared.downloads.enqueueExternalAutoInstall(autoTarget)
                     self.activeDownloads.removeAll { $0.id == app.id }
@@ -2689,8 +2674,7 @@ final class TFHomeModel: ObservableObject {
                     guard let self else { return }
                     self.installingAppIDs.remove(app.id)
                     if outcome.installed {
-                        self.installedAppIDs.insert(app.id)
-                        self.installNotes[app.id] = AppText.text("已安装")
+                        self.installNotes[app.id] = nil
                         UX.success()
                     } else {
                         self.installNotes[app.id] = AppText.text("安装未完成")

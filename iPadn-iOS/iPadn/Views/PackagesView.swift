@@ -102,8 +102,19 @@ struct PackagesView: View {
     }
 
     private var outputs: [DecryptRecord] {
-        allOutputs.filter {
-            matches([$0.appName, $0.version ?? "", $0.bundleID ?? "", $0.outputName ?? ""])
+        allOutputs.filter { record in
+            #if canImport(TestFlightKit)
+            let source = ui.source(for: record, manager: manager)
+            let tfItem = source.flatMap { tfProducts.item(forFile: $0) }
+            let isTF = record.isTestFlight == true || tfItem != nil || source?.path.contains("/TestFlight/") == true
+            var fields = [record.appName, tfItem?.displayName ?? "", record.version ?? "", record.bundleID ?? "", record.outputName ?? ""]
+            if isTF { fields.append(contentsOf: ["TestFlight", "TF"]) }
+            return matches(fields)
+            #else
+            var fields = [record.appName, record.version ?? "", record.bundleID ?? "", record.outputName ?? ""]
+            if record.isTestFlight == true { fields.append(contentsOf: ["TestFlight", "TF"]) }
+            return matches(fields)
+            #endif
         }.sorted {
             sort == 1 ? $0.appName.localizedStandardCompare($1.appName) == .orderedAscending
                 : sort == 2 ? ($0.outputBytes ?? 0) > ($1.outputBytes ?? 0)
@@ -167,10 +178,7 @@ struct PackagesView: View {
                     job: item.makeInstallJob(),
                     packageFileURL: item.fileURL,
                     packageIconURL: item.iconURL,
-                    isTestFlight: true,
-                    onInstalled: {
-                        tfModel.markInstalled(item.appID)
-                    }
+                    isTestFlight: true
                 )
                 .sheetNotice()
                 .environmentObject(store)
@@ -427,15 +435,68 @@ struct PackagesView: View {
         importedIDs.subtract(finished)
     }
 
+    private enum UnifiedOriginalEntry: Identifiable {
+        case job(DownloadJob)
+        #if canImport(TestFlightKit)
+        case tf(TFProductItem)
+        #endif
+
+        var id: String {
+            switch self {
+            case .job(let job): return "job:" + job.id.uuidString
+            #if canImport(TestFlightKit)
+            case .tf(let item): return "tf:" + item.bundleID
+            #endif
+            }
+        }
+
+        var sortName: String {
+            switch self {
+            case .job(let job): return job.app.name
+            #if canImport(TestFlightKit)
+            case .tf(let item): return item.displayName
+            #endif
+            }
+        }
+
+        var sortSize: Int64 {
+            switch self {
+            case .job(let job): return job.app.size
+            #if canImport(TestFlightKit)
+            case .tf(let item): return item.fileSize
+            #endif
+            }
+        }
+
+        var sortDate: Date {
+            switch self {
+            case .job(let job): return job.createdAt
+            #if canImport(TestFlightKit)
+            case .tf(let item): return item.modifiedAt
+            #endif
+            }
+        }
+    }
+
     @ViewBuilder private var originalSections: some View {
         let currentOriginals = originals
         let currentStandalone = filteredStandalone
         #if canImport(TestFlightKit)
         let tfItems = filteredTFItems
-        #else
-        let tfItems: [Int] = []
         #endif
-        if currentOriginals.isEmpty && currentStandalone.isEmpty && tfItems.isEmpty {
+        let unifiedOriginals: [UnifiedOriginalEntry] = {
+            var entries: [UnifiedOriginalEntry] = currentOriginals.map { .job($0) }
+            #if canImport(TestFlightKit)
+            entries.append(contentsOf: tfItems.map { .tf($0) })
+            #endif
+            entries.sort { lhs, rhs in
+                if sort == 1 { return lhs.sortName.localizedStandardCompare(rhs.sortName) == .orderedAscending }
+                if sort == 2 { return lhs.sortSize > rhs.sortSize }
+                return lhs.sortDate > rhs.sortDate
+            }
+            return entries
+        }()
+        if unifiedOriginals.isEmpty && currentStandalone.isEmpty {
             Section {
                 if term.isEmpty {
                     EmptyState(
@@ -454,39 +515,31 @@ struct PackagesView: View {
                 }
             }.listRowBackground(Color.clear)
         } else {
-            if !currentOriginals.isEmpty {
+            if !unifiedOriginals.isEmpty {
                 Section {
-                    ForEach(currentOriginals) { job in
-                        originalJobRow(job)
+                    ForEach(unifiedOriginals) { entry in
+                        switch entry {
+                        case .job(let job):
+                            originalJobRow(job)
+                        #if canImport(TestFlightKit)
+                        case .tf(let item):
+                            tfProductRow(item)
+                        #endif
+                        }
                     }
-                } footer: {
-                    if currentStandalone.isEmpty && tfItems.isEmpty {
-                        Text("原始 IPA 是处理来源，可能已加密，也可能本来就未加密。")
-                    }
-                }
-            }
-            #if canImport(TestFlightKit)
-            if !tfItems.isEmpty {
-                Section {
-                    ForEach(tfItems) { item in
-                        tfProductRow(item)
-                    }
-                } header: {
-                    Text("TestFlight")
                 } footer: {
                     if currentStandalone.isEmpty {
                         Text("原始 IPA 是处理来源，可能已加密，也可能本来就未加密。")
                     }
                 }
             }
-            #endif
             if !currentStandalone.isEmpty {
                 Section {
                     ForEach(currentStandalone, id: \.self) { url in
                         standaloneRow(url)
                     }
                 } header: {
-                    if !currentOriginals.isEmpty || !tfItems.isEmpty { Text("本地文件") }
+                    if !unifiedOriginals.isEmpty { Text("本地文件") }
                 } footer: {
                     Text("原始 IPA 是处理来源，可能已加密，也可能本来就未加密。")
                 }
@@ -513,8 +566,7 @@ struct PackagesView: View {
             status: status.text,
             symbol: status.symbol,
             color: status.color,
-            badge: "TF",
-            badgeTint: .blue
+            isTestFlight: true
         )
 
         return selectableRow(.tf(item.bundleID), disabled: ui.protects(url: item.fileURL), content: { row }) {
@@ -807,11 +859,11 @@ struct PackagesView: View {
         #if canImport(TestFlightKit)
         let tfItem = source.flatMap { tfProducts.item(forFile: $0) }
         let resolvedName = job?.app.name ?? tfItem?.displayName ?? record.appName
-        let tfBadge: String? = tfItem != nil ? "TF" : nil
+        let isTF = record.isTestFlight == true || tfItem != nil || source?.path.contains("/TestFlight/") == true
         let tfVersionLabel = tfItem?.versionBuildLabel ?? ""
         #else
         let resolvedName = job?.app.name ?? record.appName
-        let tfBadge: String? = nil
+        let isTF = record.isTestFlight == true
         let tfVersionLabel = ""
         #endif
         let cleanName = PackageStage.displayName(resolvedName)
@@ -830,7 +882,7 @@ struct PackagesView: View {
             symbol: style.symbol,
             color: style.color,
             trailingNote: record.finishedAt?.formatted(date: .omitted, time: .shortened),
-            badge: tfBadge
+            isTestFlight: isTF
         )
 
         return selectableRow(.output(record.id), disabled: service.isRunning, content: { row }) {

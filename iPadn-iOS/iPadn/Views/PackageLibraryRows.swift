@@ -11,6 +11,7 @@ struct PackageLibraryRow: View {
     var trailingNote: String? = nil
     var badge: String? = nil
     var badgeTint: Color = .blue
+    var isTestFlight: Bool = false
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
@@ -68,12 +69,20 @@ struct PackageLibraryRow: View {
     }
 
     @ViewBuilder private var rowDetails: some View {
-        if !metadata.isEmpty {
-            Text(verbatim: metadata)
-                .font(.subheadline.monospacedDigit())
-                .foregroundStyle(.secondary)
-                .lineLimit(typeSize.isAccessibilitySize ? nil : 1)
-                .fixedSize(horizontal: false, vertical: true)
+        if isTestFlight || !metadata.isEmpty {
+            HStack(spacing: 5) {
+                if isTestFlight {
+                    TestFlightIcon(size: 14)
+                        .frame(minWidth: 15)
+                }
+                if !metadata.isEmpty {
+                    Text(verbatim: metadata)
+                        .font(.subheadline.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                        .lineLimit(typeSize.isAccessibilitySize ? nil : 1)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
         }
         HStack(alignment: .firstTextBaseline, spacing: 4) {
             if let symbol {
@@ -108,9 +117,14 @@ struct DecryptLiveSummary: View {
                                 Text(verbatim: PackageStage.displayName(service.sourceName))
                                     .font(.body.weight(.medium))
                                     .lineLimit(1)
-                                Text(verbatim: PackageStage.title(service.step))
-                                    .font(.footnote)
-                                    .foregroundStyle(UX.tint)
+                                HStack(spacing: 5) {
+                                    if record?.isTestFlight == true || service.detail.contains("/TestFlight/") {
+                                        TestFlightIcon(size: 13)
+                                    }
+                                    Text(verbatim: PackageStage.title(service.step))
+                                        .font(.footnote)
+                                        .foregroundStyle(UX.tint)
+                                }
                             }
                             Spacer(minLength: 8)
                             Text("约 \(Int(service.fraction * 100))%")
