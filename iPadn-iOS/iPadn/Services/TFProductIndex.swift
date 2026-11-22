@@ -54,6 +54,22 @@ struct TFProductItem: Identifiable, Equatable {
             developerName: nil
         )
     }
+
+    func makeInstallJob() -> DownloadJob {
+        let short = shortVersion.trimmingCharacters(in: .whitespacesAndNewlines)
+        let build = buildVersion.trimmingCharacters(in: .whitespacesAndNewlines)
+        let version = !short.isEmpty ? short : (!build.isEmpty ? build : "1.0")
+        let app = StoreApp(
+            id: appID,
+            name: displayName,
+            bundleID: bundleID,
+            version: version,
+            iconURL: iconURL,
+            size: fileSize,
+            bundleVersion: build.isEmpty ? nil : build
+        )
+        return DownloadJob(app: app, status: .completed, downloaded: fileSize, expected: fileSize)
+    }
 }
 
 /// Read-only index of downloaded TestFlight products on disk (`Documents/TestFlight/*/*.ipa`).
@@ -76,7 +92,7 @@ final class TFProductIndex: ObservableObject {
     @Published private(set) var recentlyRestoredBundleIDs: Set<String> = []
     private var refreshTask: Task<Void, Never>?
     private var pendingRemovals: [UUID: StagedRemoval] = [:]
-    private static let stagingPrefix = "tf-removing-"
+    nonisolated private static let stagingPrefix = "tf-removing-"
 
     private init() {
         sweepOrphanedRemovals()
@@ -97,6 +113,16 @@ final class TFProductIndex: ObservableObject {
             guard !Task.isCancelled, let self else { return }
             self.items = scanned
         }
+    }
+
+    /// Synchronously inserts or updates a just-completed TestFlight product so
+    /// `DownloadsView` and `PackagesView` transition from active download to completed
+    /// with zero single-frame disappearances before the disk scan finishes.
+    func registerCompleted(_ item: TFProductItem) {
+        items.removeAll { $0.bundleID.caseInsensitiveCompare(item.bundleID) == .orderedSame }
+        items.insert(item, at: 0)
+        items.sort { $0.modifiedAt > $1.modifiedAt }
+        refresh()
     }
 
     /// Moves a TestFlight product directory aside for the undo window so the user can restore
